@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Piggy – Web App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA: Manifest + Theme -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111827" />
+
+  <!-- iOS: Vollbild, kein URL-Balken, eigener Titel -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Smart Piggy">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <style>
+    :root {
+      --bg-color: #111827;
+      --bg-elevated: #1f2933;
+      --text-color: #f9fafb;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.1);
+      --border-color: #374151;
+    }
+
+    body.light-theme {
+      --bg-color: #f3f4f6;
+      --bg-elevated: #ffffff;
+      --text-color: #111827;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --border-color: #d1d5db;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 960px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .current-user {
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 4px;
+    }
+
+    body.light-theme nav {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: var(--text-color);
+      opacity: 0.8;
+      transition: background 0.15s ease, opacity 0.15s ease, transform 0.08s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-soft);
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      opacity: 0.8;
+    }
+
+    .balance-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .balance-amount {
+      font-size: 2.4rem;
+      font-weight: 700;
+    }
+
+    .piggy-status {
+      padding: 8px 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-soft);
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #10b981;
+    }
+
+    .status-dot.open {
+      background: #ef4444;
+    }
+
+    .small-label {
+      font-size: 0.78rem;
+      opacity: 0.7;
+    }
+
+    .leaderboard-list,
+    .duel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .leaderboard-item,
+    .duel-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    body.light-theme .leaderboard-item,
+    body.light-theme .duel-item {
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .rank {
+      width: 20px;
+      text-align: center;
+      font-weight: 600;
+      opacity: 0.7;
+    }
+
+    .user-name {
+      flex: 1;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+
+    .amount {
+      font-weight: 600;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      opacity: 0.8;
+    }
+
+    .duel-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      align-items: center;
+    }
+
+    input[type="text"],
+    select {
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-color);
+      font-size: 0.9rem;
+      min-width: 180px;
+    }
+
+    body.light-theme input[type="text"],
+    body.light-theme select {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    input::placeholder {
+      color: rgba(148, 163, 184, 0.9);
+    }
+
+    button.primary {
+      border-radius: 10px;
+      border: none;
+      padding: 6px 14px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    button.primary:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .settings-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.9rem;
+    }
+
+    .settings-item label {
+      font-weight: 500;
+    }
+
+    .settings-item small {
+      font-size: 0.78rem;
+      opacity: 0.7;
+    }
+
+    footer {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      opacity: 0.6;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      nav {
+        width: 100%;
+        justify-content: space-between;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body class="dark-theme">
+  <div class="app">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🐷</div>
+        <span>Smart Piggy</span>
+      </div>
+      <div class="current-user" id="currentUserLabel">
+        Eingeloggt als: <strong>Guest</strong>
+      </div>
+      <nav>
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="leaderboard">Leaderboard</button>
+        <button class="tab-btn" data-tab="duels">Duels</button>
+        <button class="tab-btn" data-tab="settings">Einstellungen</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- DASHBOARD -->
+      <section id="tab-dashboard" class="card">
+        <h2>Dein Sparschwein <span class="pill">Live Daten</span></h2>
+        <p class="small-label">Diese Daten kommen später direkt von deinem ESP32 / Backend.</p>
+        <div class="balance-display">
+          <div>
+            <div class="small-label">Aktueller Stand</div>
+            <div class="balance-amount" id="balanceDisplay">€ 0,00</div>
+          </div>
+          <div>
+            <div class="small-label">Status</div>
+            <div class="piggy-status" id="piggyStatus">
+              <span class="status-dot"></span>
+              <span id="piggyStatusText">Geschlossen</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEST-NACHRICHT BUTTON -->
+        <div style="margin-top: 16px;">
+          <div class="small-label">Benachrichtigung testen</div>
+          <button class="primary" id="notifyTestBtn">
+            Test-Nachricht schicken
+          </button>
+          <div class="small-label" id="notifyInfo" style="margin-top:4px;">
+            Beim ersten Mal sollte iOS/Android fragen: „Erlauben / Nicht erlauben“.
+          </div>
+        </div>
+      </section>
+
+      <!-- LEADERBOARD -->
+      <section id="tab-leaderboard" class="card hidden">
+        <h2>Leaderboard <span class="pill">Top Saver</span></h2>
+        <p class="small-label">Alle Nutzer und ihr aktueller Sparstand.</p>
+        <div class="leaderboard-list" id="leaderboardList"></div>
+      </section>
+
+      <!-- DUELS -->
+      <section id="tab-duels" class="card hidden">
+        <h2>Duels <span class="pill">1vs1 Spar-Challenge</span></h2>
+        <p class="small-label">
+          Lade mit dem Username jemanden zum Duell ein. Ziel: Wer spart in der nächsten Woche mehr?
+        </p>
+
+        <div class="duel-form">
+          <input type="text" id="duelUsernameInput" placeholder="Username eingeben…" />
+          <button class="primary" id="duelInviteBtn">Duell einladen</button>
+        </div>
+
+        <div class="small-label" style="margin-top: 10px;">Aktive / vergangene Duelle (Demo-Daten):</div>
+        <div class="duel-list" id="duelList"></div>
+      </section>
+
+      <!-- EINSTELLUNGEN -->
+      <section id="tab-settings" class="card hidden">
+        <h2>Einstellungen <span class="pill">App Setup</span></h2>
+
+        <div class="settings-grid">
+          <div class="settings-item">
+            <label for="themeSelect">Theme</label>
+            <select id="themeSelect">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+            <small>Wechsle zwischen Dark und Light Mode.</small>
+          </div>
+
+          <div class="settings-item">
+            <label for="usernameInput">Username</label>
+            <input type="text" id="usernameInput" placeholder="Neuer Username…" />
+            <button class="primary" id="saveUsernameBtn" style="margin-top: 4px;">Speichern</button>
+            <small>Dein Name, der in Leaderboard / Duels angezeigt wird.</small>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Smart Piggy Web App – Version <span id="appVersion">0.2.0</span> · PWA-Test mit Notifications
+    </footer>
+  </div>
+
+  <script>
+    // ================================
+    // Globale Demo-Daten & State
+    // ================================
+    const APP_VERSION = "0.2.0";
+
+    const state = {
+      currentUser: {
+        username: "Guest",
+        balanceCents: 12345, // 123,45 €
+        isOpen: 0 // 0 = geschlossen, 1 = geöffnet
+      },
+      leaderboard: [
+        { username: "Vlas", balanceCents: 30500 },
+        { username: "Margarita", balanceCents: 27850 },
+        { username: "Guest", balanceCents: 12345 },
+        { username: "Anna", balanceCents: 8900 }
+      ],
+      duels: [
+        { opponent: "Vlas", status: "Läuft", week: "KW 46", you: "+12,30 €", them: "+10,00 €" },
+        { opponent: "Anna", status: "Gewonnen", week: "KW 45", you: "+20,00 €", them: "+15,00 €" }
+      ]
+    };
+
+    // ================================
+    // Platzhalter-Methoden (später ersetzen)
+    // ================================
+    async function loadCurrentUserDataFromBackend() {
+      // TODO: später echte Daten vom Backend/ESP32 holen
+      return state.currentUser;
+    }
+
+    async function loadLeaderboardFromBackend() {
+      // TODO
+      return state.leaderboard;
+    }
+
+    async function loadDuelsFromBackend() {
+      // TODO
+      return state.duels;
+    }
+
+    async function sendDuelInviteToBackend(opponentUsername) {
+      // TODO: Duell im Backend anlegen
+      console.log("Duell-Invite gesendet an:", opponentUsername);
+      state.duels.unshift({
+        opponent: opponentUsername,
+        status: "Läuft",
+        week: "KW ??",
+        you: "0,00 €",
+        them: "0,00 €"
+      });
+    }
+
+    async function saveUsernameToBackend(newUsername) {
+      // TODO: Username im Backend speichern
+      console.log("Username speichern:", newUsername);
+    }
+
+    async function saveThemePreferenceToBackend(theme) {
+      // Optional: Theme im Backend speichern
+      console.log("Theme Preference speichern:", theme);
+    }
+
+    // ================================
+    // UI-Helper
+    // ================================
+    function formatEuro(cents) {
+      const euros = cents / 100;
+      return euros.toLocaleString("de-DE", {
+        style: "currency",
+        currency: "EUR"
+      });
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tabName);
+      });
+      document.querySelectorAll("main > section").forEach(section => {
+        section.classList.toggle("hidden", section.id !== "tab-" + tabName);
+      });
+    }
+
+    function updateDashboard(user) {
+      const balanceDisplay = document.getElementById("balanceDisplay");
+      const piggyStatus = document.getElementById("piggyStatus");
+      const piggyStatusText = document.getElementById("piggyStatusText");
+
+      balanceDisplay.textContent = formatEuro(user.balanceCents);
+
+      const isOpen = user.isOpen === 1;
+      piggyStatusText.textContent = isOpen ? "Geöffnet" : "Geschlossen";
+
+      const dot = piggyStatus.querySelector(".status-dot");
+      dot.classList.toggle("open", isOpen);
+    }
+
+    function renderLeaderboard(list) {
+      const container = document.getElementById("leaderboardList");
+      container.innerHTML = "";
+      const sorted = [...list].sort((a, b) => b.balanceCents - a.balanceCents);
+
+      sorted.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "leaderboard-item";
+        row.innerHTML = `
+          <div class="rank">${index + 1}</div>
+          <div class="user-name">${item.username}</div>
+          <div class="amount">${formatEuro(item.balanceCents)}</div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderDuels(list) {
+      const container = document.getElementById("duelList");
+      container.innerHTML = "";
+      list.forEach(duel => {
+        const row = document.createElement("div");
+        row.className = "duel-item";
+        row.innerHTML = `
+          <div>
+            <div><strong>${duel.opponent}</strong></div>
+            <div class="small-label">${duel.week}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="badge">${duel.status}</div>
+            <div class="small-label">Du: ${duel.you} · Gegner: ${duel.them}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function updateCurrentUserLabel(username) {
+      const label = document.getElementById("currentUserLabel");
+      label.innerHTML = `Eingeloggt als: <strong>${username}</strong>`;
+    }
+
+    function applyTheme(theme) {
+      const body = document.body;
+      if (theme === "light") {
+        body.classList.remove("dark-theme");
+        body.classList.add("light-theme");
+      } else {
+        body.classList.remove("light-theme");
+        body.classList.add("dark-theme");
+      }
+    }
+
+    // ================================
+    // Notifications
+    // ================================
+    async function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("Notifications werden von diesem Browser nicht unterstützt.");
+        return "denied";
+      }
+      let permission = Notification.permission;
+      if (permission === "default") {
+        permission = await Notification.requestPermission();
+      }
+      return permission;
+    }
+
+    async function showTestNotification() {
+      const permission = await requestNotificationPermission();
+      if (permission !== "granted") {
+        alert("Benachrichtigungen wurden nicht erlaubt.");
+        return;
+      }
+
+      // Versuch: Notification über Service Worker (besser für PWA)
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          reg.showNotification("Smart Piggy 🐷", {
+            body: "Das ist deine Test-Benachrichtigung.",
+            icon: "icon-192.png",
+            badge: "icon-192.png"
+          });
+          return;
+        }
+      }
+
+      // Fallback: direkte Notification
+      new Notification("Smart Piggy 🐷", {
+        body: "Das ist deine Test-Benachrichtigung.",
+        icon: "icon-192.png"
+      });
+    }
+
+    // ================================
+    // Service Worker Registrierung
+    // ================================
+    function registerServiceWorker() {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js").then(reg => {
+          console.log("Service Worker registriert:", reg.scope);
+        }).catch(err => {
+          console.error("Service Worker Fehler:", err);
+        });
+      }
+    }
+
+    // ================================
+    // Init
+    // ================================
+    async function initApp() {
+      registerServiceWorker();
+
+      document.getElementById("appVersion").textContent = APP_VERSION;
+
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          switchTab(btn.dataset.tab);
+        });
+      });
+
+      // Theme aus localStorage laden
+      const savedTheme = localStorage.getItem("smartPiggyTheme") || "dark";
+      applyTheme(savedTheme);
+      document.getElementById("themeSelect").value = savedTheme;
+      document.getElementById("themeSelect").addEventListener("change", async (e) => {
+        const theme = e.target.value;
+        applyTheme(theme);
+        localStorage.setItem("smartPiggyTheme", theme);
+        await saveThemePreferenceToBackend(theme);
+      });
+
+      // Username aus localStorage
+      const savedUsername = localStorage.getItem("smartPiggyUsername");
+      if (savedUsername) {
+        state.currentUser.username = savedUsername;
+      }
+      updateCurrentUserLabel(state.currentUser.username);
+      document.getElementById("usernameInput").value = state.currentUser.username;
+
+      document.getElementById("saveUsernameBtn").addEventListener("click", async () => {
+        const newName = document.getElementById("usernameInput").value.trim();
+        if (!newName) return;
+        state.currentUser.username = newName;
+        localStorage.setItem("smartPiggyUsername", newName);
+        updateCurrentUserLabel(newName);
+        await saveUsernameToBackend(newName);
+      });
+
+      // Duell-Invite
+      document.getElementById("duelInviteBtn").addEventListener("click", async () => {
+        const opponent = document.getElementById("duelUsernameInput").value.trim();
+        if (!opponent) return;
+        await sendDuelInviteToBackend(opponent);
+        renderDuels(state.duels);
+        document.getElementById("duelUsernameInput").value = "";
+      });
+
+      // Test-Notification Button
+      document.getElementById("notifyTestBtn").addEventListener("click", showTestNotification);
+
+      // Demo-Daten laden
+      const user = await loadCurrentUserDataFromBackend();
+      updateDashboard(user);
+
+      const leaderboard = await loadLeaderboardFromBackend();
+      renderLeaderboard(leaderboard);
+
+      const duels = await loadDuelsFromBackend();
+      renderDuels(duels);
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
